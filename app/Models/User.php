@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Form;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -25,7 +26,7 @@ class User extends Authenticatable implements JWTSubject
         'provider_id',
         'provider',
     ];
-
+  
     /**
      * The attributes that should be hidden for arrays.
      *
@@ -61,5 +62,12 @@ class User extends Authenticatable implements JWTSubject
     public function getJWTCustomClaims()
     {
         return [];
+    }
+
+
+    //One user can have multiple forms..
+    public function forms()
+    {
+        return $this->hasMany(Form::class);
     }
 }
