@@ -18,6 +18,7 @@ class FormController extends Controller
         //    ]);
         $user = auth()->user();
         $form =  $user->forms()->create($request->only('title'));
+        $form = $form->refresh();
         $form->ok = true;
         return $form;
     }
@@ -48,7 +49,7 @@ class FormController extends Controller
     public function index()
     {
         $user = auth()->user();
-        $forms = $user->forms()->get();
+        $forms = $user->forms()->orderBy('created_at','DESC')->get();
         return response($forms);
     }
 }
