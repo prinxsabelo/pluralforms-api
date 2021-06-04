@@ -15,9 +15,9 @@ class CreateFormsTable extends Migration
     {
         Schema::create('forms', function (Blueprint $table) {
             $table->increments('form_id');
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('title');
             $table->string('avatar')->nullable();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('status')->default('open');
             $table->string('begin_message')->nullable();
             $table->string('end_message')->nullable();

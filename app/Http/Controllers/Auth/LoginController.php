@@ -49,8 +49,7 @@ class LoginController extends Controller
                         'email' => $checkUser->getEmail(),
                         'avatar' => $checkUser->getAvatar(),
                         'provider' => $provider,
-                        'provider_id' => $checkUser->getId(),
-                        'password' => ''
+                        'provider_id' => $checkUser->getId()
                     ]);
         }else{
             $user->update([

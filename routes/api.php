@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\FormController;
 use App\Http\Controllers\LogoutController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\BuildQuestionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -26,4 +27,6 @@ Route::group(['middleware' => 'jwt.auth'], function() {
     Route::post('/user/forms',[FormController::class,'store']);
     Route::post('/user/forms/update',[FormController::class,'update']);
     Route::get('/user/forms',[FormController::class,'index']);
+    Route::post('/user/form',[BuildQuestionController::class,'index']);
+    // Route::post('/user/form',[])
 });

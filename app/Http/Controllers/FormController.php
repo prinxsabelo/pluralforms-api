@@ -11,11 +11,6 @@ class FormController extends Controller
     //
     public function store(Request $request)
     {
-        // return response()->json(auth()->user());
-        //    $form = Form::create([
-        //        'title' => $request->title,
-
-        //    ]);
         $user = auth()->user();
         $form =  $user->forms()->create($request->only('title'));
         $form = $form->refresh();
@@ -26,7 +21,6 @@ class FormController extends Controller
     {
             $user = auth()->user();
             $form_id = $request->form_id;
-            // $form = $user->forms()->where('form_id',$form_id)->get();
             $form = $user->forms()->where('form_id',$form_id)->first();
            
             if($request->title)  
