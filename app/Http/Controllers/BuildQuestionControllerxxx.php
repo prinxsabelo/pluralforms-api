@@ -84,36 +84,62 @@ class BuildQuestionController extends Controller
             $question->title = $request->title;
             $question->type = $request->type;
             $question->save();
-            $response['ok'] = true;
-            $property = Property::where('q_id',$q_id)->first();
-            if(isset($request->properties['shape']))  {   $property->shape = $request->properties['shape']; }
-            if(isset($request->proprtries['randomize'])) {   $property->randomize = $request->properties['randomize']; }
-            if(isset($request->properties['required'])) { $property->required = $request->properties['required']; }
-            
-            $property->save();
+       
+            $properties = Property::where('q_id',$q_id)->first();
+            $properties->shape = $request->properties['shape'];
+            $properties->randomize = $request->properties['randomize'];
+            $properties->required = $request->properties['required'];
+            $properties->save();
             $indexArr=[];
             $control = false;
-            $choices = $request->properties['choices'];
-            $checkChoices = Choice::where('q_id',$q_id)->get();
-           
-            
-            if(count($choices) <= 5)
+            // return $request->properties['choices'];
+            foreach($request->properties['choices'] as $choice)
             {
-                $questionChoices = Choice::where('q_id',$q_id)->delete();
-                foreach($choices as $choice)
+               
+                        // Choice::where('choice_id',$choice_id)->update([
+                       
+                        //     'label'=>$choice['label'],
+                        //     'q_id' => $q_id
+                        // ]);
+                $choice_label = $choice['label'];
+                if(isset($choice['choice_id']))
                 {
-                    $label = $choice['label'];
-                    if($label)
-                    {
-                        $newChoice = Choice::create(['label' => $label,'q_id' => $q_id]);
-                    }
-                }
-            }else{
-                return response("Max choices are 5",401);
-            }
-            $response['ok'] = true;
-            return response($response);
+                    $choice_id = $choice['choice_id'];
+                   
+                        $checkChoice = Choice::where('choice_id',$choice_id)->where('q_id',$q_id)->first();
+                        if($checkChoice->count() > 0)
+                        {
+                            $checkChoice->label = $choice_label;
+                            $checkChoice->update([
+                                'label'=>$choice['label'],
+                                'q_id' => $q_id
+                            ]);
+                        }                       
+                }else{
             
+                    $indexChoiceId = 0;
+                    $check['index'] = $choice['index'];
+                    $index = $choice['index'];
+                    $check['choice_id'] = 0;
+                    // $newChoice = Choice::firstOrCreate(['label' => $choice_label],['q_id' => $q_id]);
+                    // $check['choice_id'] = $newChoice['choice_id'];
+                    //Check index first before creating new choice..
+                    
+                    // echo $index." = ";
+                    array_push($indexArr, $check);
+                
+                    
+                 
+                }
+               
+                // echo json_encode($xxx);
+            }
+            
+            echo json_encode($indexArr);
+            // $response['ok'] = true;
+            // return response($response,201);
+            // $question = $form->questions()->where('q_id',$q_id)->first();
+            // return response($question);
         }else{
             return response("You cannot access form..",401);
         }

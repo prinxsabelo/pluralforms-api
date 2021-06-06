@@ -24,9 +24,15 @@ Route::get('/login/{provider}/callback',[LoginController::class,'handleCallbackP
 Route::get('/logout',[LogoutController::class,'logout']);
 
 Route::group(['middleware' => 'jwt.auth'], function() {
+    //Forms..
     Route::post('/user/forms',[FormController::class,'store']);
-    Route::post('/user/forms/update',[FormController::class,'update']);
+    Route::put('/user/forms/update',[FormController::class,'update']);
     Route::get('/user/forms',[FormController::class,'index']);
+
+
+    //Building Questons here..
     Route::post('/user/form',[BuildQuestionController::class,'index']);
+    Route::post('/user/form/build',[BuildQuestionController::class,'store']);
+    Route::put('/user/form/build/update',[BuildQuestionController::class,'update']);
     // Route::post('/user/form',[])
 });

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\User;
+use App\Models\Question;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
@@ -17,4 +18,10 @@ class Form extends Model
     {
         return $this->belongsTo(User::class);
     }
+    //One form can have multiple questions..
+    public function questions()
+    {
+        return $this->hasMany(Question::class);
+    }
+    
 }
