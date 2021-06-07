@@ -19,7 +19,7 @@ class Property extends Model
     protected $fillable = [
         'q_id','shape','allow_multiple_selection','required','randomize'
     ];
-    public function Property()
+    public function Question()
     {
         return $this->hasOne(Question::class);
     }

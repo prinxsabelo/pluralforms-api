@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 
 class FormController extends Controller
 {
-    //
+    //Creating new form here..
     public function store(Request $request)
     {
         $user = auth()->user();
@@ -17,6 +17,7 @@ class FormController extends Controller
         $form->ok = true;
         return $form;
     }
+    //Updating existing form here..
     public function update(Request $request)
     {
             $user = auth()->user();
@@ -40,6 +41,7 @@ class FormController extends Controller
           
        
     }
+    // Fetching all forms for user here..
     public function index()
     {
         $user = auth()->user();
