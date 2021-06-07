@@ -144,9 +144,13 @@ class BuildQuestionController extends Controller
                
             }
        
-
+            $form->status = "active";
+            $form->save();
             $form->touch();
             $response['ok'] = true;
+
+
+          
             return response($response);
             
         }else{

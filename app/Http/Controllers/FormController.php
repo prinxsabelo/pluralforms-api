@@ -17,6 +17,7 @@ class FormController extends Controller
         $form->ok = true;
         return $form;
     }
+    
     //Updating existing form here..
     public function update(Request $request)
     {
@@ -36,11 +37,44 @@ class FormController extends Controller
             {
                 $form->avatar = $request->avatar;
             }
+            $form->status = "active";
             $form->save();
             return response($form);
           
        
     }
+
+    //Closing form here..
+    public function close(Request $request)
+    {
+        $user = auth()->user();
+        $form =  $user->forms()->where('form_id',$request->form_id)->first();
+        $form->status = "closed";
+        $form->save();
+        $form = $form->refresh();
+        return $form;
+    }
+
+    //Form can be restored here..
+    public function restore(Request $request)
+    {
+        $user = auth()->user();
+        $form =  $user->forms()->where('form_id',$request->form_id)->first();
+        $form->status = "active";
+        $form->save();
+        $form = $form->refresh();
+        return $form;
+    }
+
+    // Form can be deleted here..
+    public function delete(Request $request)
+    {
+        $user = auth()->user();
+        $form =  $user->forms()->where('form_id',$request->form_id)->delete();
+        $response['ok'] = true;
+        return $response;
+    }
+
     // Fetching all forms for user here..
     public function index()
     {

@@ -28,11 +28,13 @@ Route::group(['middleware' => 'jwt.auth'], function() {
     Route::post('/user/forms',[FormController::class,'store']);
     Route::put('/user/forms/update',[FormController::class,'update']);
     Route::get('/user/forms',[FormController::class,'index']);
-
+    Route::put('/user/forms/close',[FormController::class,'close']);
+    Route::put('/user/forms/restore',[FormController::class,'restore']);
+    Route::delete('/user/forms/delete',[FormController::class,'delete']);
 
     //Building Questons here..
     Route::post('/user/form',[BuildQuestionController::class,'index']);
     Route::post('/user/form/build',[BuildQuestionController::class,'store']);
     Route::put('/user/form/build/update',[BuildQuestionController::class,'update']);
-    // Route::post('/user/form',[])
+
 });
