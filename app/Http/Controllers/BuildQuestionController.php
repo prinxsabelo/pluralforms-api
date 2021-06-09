@@ -15,9 +15,11 @@ class BuildQuestionController extends Controller
     {
         $user = auth()->user();
         $form_id = $request->form_id;
-        $form = $user->forms()->where('form_id',$form_id)->first();
-        if($form->count() > 0)
+        //Checking if form exists user first.. before fetching questions.
+        $formCount = $user->forms()->where('form_id',$form_id)->count();
+        if($formCount > 0)
         {   
+            $form = $user->forms()->where('form_id',$form_id)->first();
             $questions = Question::where('form_id',$form_id)->get();
             foreach ($questions as $question) 
             {
@@ -28,7 +30,12 @@ class BuildQuestionController extends Controller
                 }
                 $properties = Property::where('q_id',$question->q_id)->first();
 
-                $properties->choices = Choice::where('q_id',$question->q_id)->get();
+                $choices = Choice::where('q_id',$question->q_id)->get();
+                foreach($choices as $key => $choice)
+                {
+                    $choice->index = $key;
+                }
+                 $properties->choices = $choices;
                 $properties->feedback = Feedback::where('q_id',$question->q_id)->get();
                 $question->properties = $properties;
                 
@@ -65,7 +72,7 @@ class BuildQuestionController extends Controller
             ];
             $feedback = Feedback::insert($feedArr);
             $property->choices = [];
-            $property->feedback = $feedback;
+            $property->feedback = $feedArr;
             $question->properties = $property;
             
             
@@ -83,10 +90,11 @@ class BuildQuestionController extends Controller
         $user = auth()->user();
         $form_id = $request->form_id;
         $q_id = $request->q_id;
-        $form = $user->forms()->where('form_id',$form_id)->first();
+        //Firstly Check if user owns the form he wants to edit first..
+        $form = $user->forms()->where('form_id',$form_id)->get();
         if($form->count() > 0)
         {   
-            
+
             $question = Question::where('q_id',$q_id)->first();
             $question->title = $request->title;
             $question->type = $request->type;
@@ -120,11 +128,8 @@ class BuildQuestionController extends Controller
                 $questionChoices = Choice::where('q_id',$q_id)->delete();
                 foreach($choices as $choice)
                 {
-                    $label = $choice['label'];
-                    if($label)
-                    {
+                        $label = $choice['label'];
                         $newChoice = Choice::create(['label' => $label,'q_id' => $q_id]);
-                    }
                 }
             }else{
                 return response("Max choices are 5",401);
@@ -143,20 +148,35 @@ class BuildQuestionController extends Controller
                 }
                
             }
-       
-            $form->status = "active";
-            $form->save();
-            $form->touch();
+            $upForm = $user->forms()->where('form_id',$form_id)->first();
+            $upForm->status = "active";
+            $upForm->save();
+            $upForm->touch();
             $response['ok'] = true;
 
-
-          
             return response($response);
             
         }else{
             return response("You cannot access form..",401);
         }
     
+    }
+    public function delete(Request $request)
+    {
+        $user = auth()->user();
+        $form_id = $request->form_id;
+        $q_id = $request->q_id;
+        //Firstly Check if user owns the form he wants to edit first..
+        $form = $user->forms()->where('form_id',$form_id)->get();
+        if($form->count() > 0)
+        {   
+            $question = Question::where('q_id',$q_id)->delete();
+            
+            $response['ok'] = true;
+            return $response;
+        }   else{ 
+            return response("You cannot access form..",401);
+        }
     }
 }
 

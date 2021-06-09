@@ -15,8 +15,8 @@ class CreateFeedbackTable extends Migration
     {
         Schema::create('feedback', function (Blueprint $table) {
             $table->increments('feedback_id');
-            $table->string('occupy');
-            $table->string('label');
+            $table->string('occupy')->nullable();
+            $table->string('label')->nullable();
             $table->unsignedBigInteger('q_id')->constrained()->onDelete('cascade');
             $table->timestamps();
             $table->foreign('q_id')

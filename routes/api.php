@@ -36,5 +36,6 @@ Route::group(['middleware' => 'jwt.auth'], function() {
     Route::post('/user/form',[BuildQuestionController::class,'index']);
     Route::post('/user/form/build',[BuildQuestionController::class,'store']);
     Route::put('/user/form/build/update',[BuildQuestionController::class,'update']);
+    Route::delete('/user/form/build/delete',[BuildQuestionController::class,'delete']);
 
 });
