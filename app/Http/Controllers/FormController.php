@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Form;
 use App\Models\User;
+use App\Models\Question;
 use Illuminate\Http\Request;
 
 class FormController extends Controller
@@ -24,15 +25,19 @@ class FormController extends Controller
             $user = auth()->user();
             $form_id = $request->form_id;
             $form = $user->forms()->where('form_id',$form_id)->first();
-           
+            
             if($request->title)  
                 $form->title = $request->title;
             if($request->status)
                 $form->status = $request->status;
-            if($request->begin_message) 
-                $form->begin_message = $request->begin_message;
-            if($request->end_message)
-                $form->end_message = $request->end_message;
+            if($request->begin_header) 
+                $form->begin_header = $request->begin_header;
+            if($request->begin_desc) 
+                $form->begin_desc = $request->begin_desc;
+            if($request->end_header)
+                $form->end_header = $request->end_header;
+            if($request->end_desc)
+                $form->end_desc = $request->end_desc;
             if($request->avatar)
             {
                 $form->avatar = $request->avatar;
@@ -80,6 +85,12 @@ class FormController extends Controller
     {
         $user = auth()->user();
         $forms = $user->forms()->orderBy('created_at','DESC')->get();
+        foreach($forms as $form)
+        {
+            $form_id = $form->form_id;
+            $no_questions = Question::where('form_id',$form_id)->count();
+            $form->no_questions = $no_questions;
+        }
         return response($forms);
     }
 }

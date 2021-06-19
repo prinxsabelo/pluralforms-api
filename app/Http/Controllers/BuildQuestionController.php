@@ -171,7 +171,9 @@ class BuildQuestionController extends Controller
         if($form->count() > 0)
         {   
             $question = Question::where('q_id',$q_id)->delete();
-            
+            //Updating form column for updated_at here..
+            $upForm =$user->forms()->where('form_id',$form_id)->first();
+            $upForm->touch();
             $response['ok'] = true;
             return $response;
         }   else{ 

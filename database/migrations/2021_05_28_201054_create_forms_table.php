@@ -19,8 +19,10 @@ class CreateFormsTable extends Migration
             $table->string('title');
             $table->string('avatar')->nullable();
             $table->string('status')->default('active');
-            $table->string('begin_message')->nullable();
-            $table->string('end_message')->nullable();
+            $table->string('begin_header')->default('Welcome')->nullable();
+            $table->string('begin_desc')->default('Hi there, please fill out and submit this form.')->nullable();
+            $table->string('end_header')->default('Thank You!')->nullable();
+            $table->string('end_desc')->default('Your submission has been received!')->nullable();
             $table->timestamps();
         });
     }
