@@ -12,14 +12,14 @@ class Property extends Model
         'allow_multiple_selection' => 'boolean',
         'required' => 'boolean',
         'randomize' => 'boolean'
-      ];
+    ];
     public $timestamps = false;
     protected $primaryKey = 'property_id';
     use HasFactory;
     protected $fillable = [
         'q_id','shape','allow_multiple_selection','required','randomize'
     ];
-    public function Question()
+    public function question()
     {
         return $this->hasOne(Question::class);
     }

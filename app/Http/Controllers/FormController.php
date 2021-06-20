@@ -1,9 +1,6 @@
 <?php
 
 namespace App\Http\Controllers;
-
-use App\Models\Form;
-use App\Models\User;
 use App\Models\Question;
 use Illuminate\Http\Request;
 
@@ -14,6 +11,7 @@ class FormController extends Controller
     {
         $user = auth()->user();
         $form =  $user->forms()->create($request->only('title'));
+        $form->no_questions = 0;
         $form = $form->refresh();
         $form->ok = true;
         return $form;

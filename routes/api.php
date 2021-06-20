@@ -6,7 +6,7 @@ use App\Http\Controllers\FormController;
 use App\Http\Controllers\LogoutController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\BuildQuestionController;
-
+use App\Http\Controllers\ReplyFormController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -40,3 +40,6 @@ Route::group(['middleware' => 'jwt.auth'], function() {
 
 });
 
+
+//Answering Questions here..
+Route::post('/reply',[ReplyFormController::class,'index']);
