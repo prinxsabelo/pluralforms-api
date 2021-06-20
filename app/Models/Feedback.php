@@ -10,7 +10,7 @@ class Feedback extends Model
     use HasFactory;
     protected $primaryKey = 'feedback_id';
 
-    public function Question()
+    public function question()
     {
         return $this->belongsTo(Question::class,'foreign_key','q_id');
     }

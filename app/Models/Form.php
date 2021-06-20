@@ -14,7 +14,7 @@ class Form extends Model
     protected $fillable = [
         'title','avatar','begin_message','end_message'
     ];
-    public function User()
+    public function user()
     {
         return $this->belongsTo(User::class);
     }

@@ -25,7 +25,7 @@ class Question extends Model
         'title','type','form_id'
     ];
     // Question belong to a form..
-    public function Form()
+    public function form()
     {
         return $this->belongsTo(Form::class,'foreign_key', 'form_id');
     }
