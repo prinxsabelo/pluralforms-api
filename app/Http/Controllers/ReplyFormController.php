@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 use App\Models\Form;
 use App\Models\Question;
 use App\Models\Answer;
-use App\Models\Property;
 use App\Models\Choice;
 use App\Models\Feedback;
 use Illuminate\Http\Request;
@@ -16,11 +15,35 @@ class ReplyFormController extends Controller
     {
         $token = $request->token;
         $form_id = $request->form_id;
+
+        $formCount = Form::where('form_id',$form_id)->count();
+        if($formCount == 0)
+        {
+            $response['message'] = "Form not found..";
+            return response($response,401);
+        }
+        
+        $formCheckStatus = Form::where('form_id',$form_id)->where('status','ACTIVE')->count();
+        if($formCheckStatus == 0)
+        {
+            $response['message'] = "Form is closed";
+            return response($response,401);
+        }  
+
+        $form = Form::select('avatar','title','status','begin_header','begin_desc',
+                                'end_header','end_desc')->where('form_id',$form_id)->first();
+
+
         $count = Answer::where('token',$token)->where('form_id',$form_id)->count();
         //No answers yet for respondent.. Thereby store default answers for respondent..
         if($count == 0)
         {
             $questions = Question::where('form_id',$form_id)->get();
+            if($questions->count() == 0)
+            {
+                $response['message'] = "No Questions found for form you want to fill..";
+                return $response;
+            }
             foreach($questions as $question)
             {
                 $q_id = $question['q_id'];
@@ -65,6 +88,7 @@ class ReplyFormController extends Controller
             }
             
         }
-        return $returnPack;
+        $form->arr = $returnPack;
+        return $form;
     }
 }

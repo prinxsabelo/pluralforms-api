@@ -18,7 +18,7 @@ class CreateFormsTable extends Migration
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('title');
             $table->string('avatar')->nullable();
-            $table->string('status')->default('active');
+            $table->string('status')->default('ACTIVE');
             $table->string('begin_header')->default('Welcome')->nullable();
             $table->string('begin_desc')->default('Hi there, please fill out and submit this form.')->nullable();
             $table->string('end_header')->default('Thank You!')->nullable();
