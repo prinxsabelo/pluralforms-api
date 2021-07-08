@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 class Answer extends Model
 {
     use HasFactory;   
+    protected $primaryKey = 'a_id';
     protected $casts = [
         'submitted' => 'boolean'
     ];

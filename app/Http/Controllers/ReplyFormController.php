@@ -72,7 +72,9 @@ class ReplyFormController extends Controller
                                     ->join('properties','properties.q_id','questions.q_id')
                                     ->join('answers','answers.q_id','questions.q_id')
                                     ->where('answers.token',$token)
-                                    ->select(   'questions.q_id','questions.form_id',
+                                    ->select(  
+                                                'answers.a_id',
+                                                'questions.q_id','questions.form_id',
                                                 'title','type','shape',
                                                 'allow_multiple_selection','required','randomize',
                                                 'answer','submitted','token'
@@ -80,15 +82,49 @@ class ReplyFormController extends Controller
                                     ->get();
         foreach ($returnPack as $question) 
         {
-           $question->choices = Choice::where('q_id',$question->q_id)->select('label')->get();
+           
+           $question->choices = Choice::where('q_id',$question->q_id)->select('label','choice_id')->get();
            $question->feedback = [];
             if($question->type == "YN")
             {
                 $question->feedback = Feedback::where('q_id',$question->q_id)->select('q_id','occupy','label')->get();
             }
-            
+            if($question->type == "CHOICE" && $question->allow_multiple_selection && !$question->answer)
+            {
+                $question->answer = [];
+            }
         }
         $form->arr = $returnPack;
         return $form;
+    }
+    public function store(Request $request)
+    {
+        $form_id = $request->form_id;
+        $answer = $request->answer;
+        $token = $request->token;
+        $a_id = $request->a_id;
+        $q_id = $request->q_id;
+       $upAnswer = Answer::where('a_id',$a_id)->where('form_id',$form_id)->where('token',$token)->first();
+        if($upAnswer)
+        {
+            $upAnswer->answer = $answer;
+            $upAnswer->save();
+            echo json_encode($upAnswer);
+            $response['ok'] = true;
+            return response($response);
+        } else{
+            $countQuestion = Question::where('form_id',$form_id)->where('q_id',$q_id)->count();
+            if($countQuestion == 0)
+            {
+                $response['message'] = "You can not fill this form..";
+                return response($response,401);
+            }
+            Answer::create([
+                'q_id' => $q_id,
+                'form_id' => $form_id,
+                'token' => $token,
+                'answer' => $answer
+            ]);
+        }
     }
 }

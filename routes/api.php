@@ -43,3 +43,4 @@ Route::group(['middleware' => 'jwt.auth'], function() {
 
 //Answering Questions here..
 Route::post('/reply',[ReplyFormController::class,'index']);
+Route::post('/reply/build',[ReplyFormController::class,'store']);
