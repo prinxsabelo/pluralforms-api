@@ -14,7 +14,7 @@ class Answer extends Model
         'submitted' => 'boolean'
     ];
     protected $fillable = [
-        'form_id','q_id', 'answer','submitted','token'
+        'form_id','q_id', 'answer','submitted','token','visited'
     ];
     public function Question()
     {

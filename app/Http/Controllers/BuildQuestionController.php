@@ -16,34 +16,38 @@ class BuildQuestionController extends Controller
         $user = auth()->user();
         $form_id = $request->form_id;
         //Checking if form exists user first.. before fetching questions.
-        $formCount = $user->forms()->where('form_id',$form_id)->count();
+        $formCount = Form::where('user_id',$user->id)->where('form_id',$form_id)->count();
         if($formCount > 0)
         {   
-            $form = $user->forms()->where('form_id',$form_id)->first();
+            $form = Form::where('user_id',$user->id)->where('form_id',$form_id)->first();
             $questions = Question::where('form_id',$form_id)->get();
-            foreach ($questions as $question) 
+            foreach ($questions as $key => $question) 
             {
                 //Trying to convert NULL to string here..
                 if(!$question->title)
                 {
                     $question->title = "";
                 }
+         
+                $question->form_id = $form_id;
+               
                 $properties = Property::where('q_id',$question->q_id)->first();
 
                 $choices = Choice::where('q_id',$question->q_id)->get();
                 foreach($choices as $key => $choice)
                 {
-                    $choice->index = $key;
+                    $choice->c_index = $key;
                 }
                  $properties->choices = $choices;
                 $properties->feedback = Feedback::where('q_id',$question->q_id)->get();
                 $question->properties = $properties;
-                
+               
             }
             $form->questions = $questions;
             $response['form'] = $form;
             return response($response);
         }else{
+            
             return response("You cannot access form..",401);
         } 
     }
@@ -54,7 +58,7 @@ class BuildQuestionController extends Controller
         $user = auth()->user();
         $form_id = $request->form_id;
         $type = $request->type;
-        $form = $user->forms()->where('form_id',$form_id)->first();
+        $form = Form::where('user_id',$user->id)->where('form_id',$form_id)->first();
         if($form->count() > 0)
         {   
             $question =  Question::create([
@@ -67,14 +71,15 @@ class BuildQuestionController extends Controller
                 'q_id' => $q_id
             ]);
             $feedArr = [
-                ['q_id' => $q_id, 'occupy' => 'YES', 'label' => '' ],
-                ['q_id' => $q_id, 'occupy' => 'NO', 'label' => '' ],
+                ['q_id' => $q_id, 'occupy' => 'Yes', 'label' => '' ],
+                ['q_id' => $q_id, 'occupy' => 'No', 'label' => '' ],
             ];
             $feedback = Feedback::insert($feedArr);
+            $property->shape = "star";
             $property->choices = [];
             $property->feedback = $feedArr;
             $question->properties = $property;
-            
+            $question->title="";
             
             //Updating form column for updated_at here..
             $form->touch();
@@ -91,11 +96,12 @@ class BuildQuestionController extends Controller
         $form_id = $request->form_id;
         $q_id = $request->q_id;
         //Firstly Check if user owns the form he wants to edit first..
-        $form = $user->forms()->where('form_id',$form_id)->get();
+        $form = Form::where('user_id',$user->id)->where('form_id',$form_id)->get();
         if($form->count() > 0)
         {   
 
             $question = Question::where('q_id',$q_id)->first();
+            $question->form_id = $form_id;
             $question->title = $request->title;
             $question->type = $request->type;
             $question->save();
@@ -119,17 +125,16 @@ class BuildQuestionController extends Controller
                 $property->allow_multiple_selection = $request->properties['allow_multiple_selection'];
             }
             $property->save();
-            $indexArr=[];
-            $control = false;
+         
             $choices = $request->properties['choices'];
-            $checkChoices = Choice::where('q_id',$q_id)->get(); 
+         
             if(count($choices) <= 5)
             {
-                $questionChoices = Choice::where('q_id',$q_id)->delete();
+                Choice::where('q_id',$q_id)->delete();
                 foreach($choices as $choice)
                 {
                         $label = $choice['label'];
-                        $newChoice = Choice::create(['label' => $label,'q_id' => $q_id]);
+                        Choice::create(['label' => $label,'q_id' => $q_id]);
                 }
             }else{
                 return response("Max choices are 5",401);
@@ -139,7 +144,7 @@ class BuildQuestionController extends Controller
                 $feedArr = $request->properties['feedback'];
                 if(count($feedArr) == 2)
                 {
-                    $feedY = Feedback::where('q_id',$q_id)->where('occupy','YES')->first();
+                    $feedY = Feedback::where('q_id',$q_id)->where('occupy','Yes')->first();
                     $feedY->label = $feedArr[0]['label'];
                     $feedY->save();
                     $feedN = Feedback::where('q_id',$q_id)->where('occupy','No')->first();
@@ -148,8 +153,8 @@ class BuildQuestionController extends Controller
                 }
                
             }
-            $upForm = $user->forms()->where('form_id',$form_id)->first();
-            $upForm->status = "active";
+            $upForm = Form::where('user_id',$user->id)->where('form_id',$form_id)->first();
+            $upForm->status = "ACTIVE";
             $upForm->save();
             $upForm->touch();
             $response['ok'] = true;
@@ -167,18 +172,58 @@ class BuildQuestionController extends Controller
         $form_id = $request->form_id;
         $q_id = $request->q_id;
         //Firstly Check if user owns the form he wants to edit first..
-        $form = $user->forms()->where('form_id',$form_id)->get();
+        $form = Form::where('user_id',$user->id)->where('form_id',$form_id)->get();
         if($form->count() > 0)
         {   
             $question = Question::where('q_id',$q_id)->delete();
             //Updating form column for updated_at here..
-            $upForm =$user->forms()->where('form_id',$form_id)->first();
+            $upForm = Form::where('user_id',$user->id)->where('form_id',$form_id)->first();
             $upForm->touch();
             $response['ok'] = true;
             return $response;
         }   else{ 
             return response("You cannot access form..",401);
         }
+    }
+
+    public function copy(Request $request)
+    {
+        $fromQuestion =  Question::where('q_id',$request->q_id)->first();
+        $newQuestion = Question::create([
+            'title' => $fromQuestion->title,
+            'type' => $fromQuestion->type,
+            'form_id' => $fromQuestion->form_id,
+        ]);
+        $fromProperty = Property::where('q_id',$request->q_id)->first();
+            Property::create([
+                'shape' => $fromProperty->shape,
+                'allow_multiple_selection' => $fromProperty->allow_multiple_selection,
+                'required' => $fromProperty->required,
+                'randomize' => $fromProperty->randomize,
+                'q_id' => $newQuestion->q_id
+            ]);
+        $fromFeedback = Feedback::where('q_id',$request->q_id)->get();
+        foreach ($fromFeedback as $key => $value) {
+            Feedback::create([
+               'q_id' => $newQuestion->q_id,
+               'occupy' => $value->occupy,
+               'label' => $value->label
+           ]);
+        }
+       
+
+        $properties = Property::where('q_id',$newQuestion->q_id)->first();
+
+        $choices = Choice::where('q_id',$newQuestion->q_id)->get();
+        foreach($choices as $key => $choice)
+        {
+            $choice->c_index = $key;
+        }
+         $properties->choices = $choices;
+        $properties->feedback = Feedback::where('q_id',$newQuestion->q_id)->get();
+        $newQuestion->properties = $properties;
+
+        return $newQuestion;
     }
 }
 

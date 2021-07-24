@@ -6,6 +6,7 @@ use App\Models\Question;
 use App\Models\Answer;
 use App\Models\Choice;
 use App\Models\Feedback;
+use App\Models\AnswerDetail;
 use Illuminate\Http\Request;
 
 class ReplyFormController extends Controller
@@ -15,8 +16,9 @@ class ReplyFormController extends Controller
     {
         $token = $request->token;
         $form_id = $request->form_id;
-
-        $formCount = Form::where('form_id',$form_id)->count();
+        $ref_id = $request->ref_id;
+      
+        $formCount = Form::where('form_id',$form_id)->where('ref_id', $ref_id)->count();
         if($formCount == 0)
         {
             $response['message'] = "Form not found..";
@@ -26,6 +28,7 @@ class ReplyFormController extends Controller
         $formCheckStatus = Form::where('form_id',$form_id)->where('status','ACTIVE')->count();
         if($formCheckStatus == 0)
         {
+            
             $response['message'] = "Form is closed";
             return response($response,401);
         }  
@@ -41,8 +44,8 @@ class ReplyFormController extends Controller
             $questions = Question::where('form_id',$form_id)->get();
             if($questions->count() == 0)
             {
-                $response['message'] = "No Questions found for form you want to fill..";
-                return $response;
+                $response['message'] = "No Question found..";
+                return response($response,401);
             }
             foreach($questions as $question)
             {
@@ -56,17 +59,17 @@ class ReplyFormController extends Controller
         }
 
         //Check if respondent have submitted answers to questions already..
-        $countSubmitted = Answer::where('token',$token)->where('form_id',$form_id)->where('submitted',true)->count();
-        $countQuestions = Question::where('form_id',$form_id)->count();
+        // $countSubmitted = Answer::where('token',$token)->where('form_id',$form_id)->where('submitted',true)->count();
+        // $countQuestions = Question::where('form_id',$form_id)->count();
 
         //All answered submitted already.. Form filling done..
         // Check settings if multiple submission is allowed here and comment line function below if needed too..
-        if($countQuestions == $countSubmitted)
-        {
-            $response['done'] = true;
-            return $response;
-        }
-       
+        // if($countQuestions == $countSubmitted)
+        // {
+        //     $response['done'] = true;
+        //     return $response;
+        // }
+            
         //Fetch Pack of questions and answers for respondent to answer..
         $returnPack = Question::where('questions.form_id',$form_id)
                                     ->join('properties','properties.q_id','questions.q_id')
@@ -94,6 +97,7 @@ class ReplyFormController extends Controller
                 $question->answer = [];
             }
         }
+        $form->ok = true;
         $form->arr = $returnPack;
         return $form;
     }
@@ -104,12 +108,14 @@ class ReplyFormController extends Controller
         $token = $request->token;
         $a_id = $request->a_id;
         $q_id = $request->q_id;
+        $submitted = true;
        $upAnswer = Answer::where('a_id',$a_id)->where('form_id',$form_id)->where('token',$token)->first();
         if($upAnswer)
         {
             $upAnswer->answer = $answer;
+            $upAnswer->submitted = true;
             $upAnswer->save();
-            echo json_encode($upAnswer);
+           
             $response['ok'] = true;
             return response($response);
         } else{
@@ -123,8 +129,64 @@ class ReplyFormController extends Controller
                 'q_id' => $q_id,
                 'form_id' => $form_id,
                 'token' => $token,
-                'answer' => $answer
+                'answer' => $answer,
+                'submitted' => true
             ]);
         }
+    }
+
+    public function token(Request $request)
+    {
+        $form_id = $request->form_id;
+        $token = $request->token;
+        $ref_id = $request->ref_id;
+        return AnswerDetail::create([
+            'form_id'=>$form_id,
+            'ref_id' => $ref_id,
+            'token'=>$token,
+            'visited'=>true
+        ]);
+
+    } 
+    public function submit(Request $request)
+    {
+       
+        $form_id = $request->form_id;
+        $token = $request->token;
+        $answer_detail = AnswerDetail::where('form_id',$form_id)->where('token',$token)->first();
+        $answer_detail->submitted = true;
+        $answer_detail->save();
+        $response['ok'] = true;
+        return $response;
+    }
+    public function check(Request $request)
+    {
+        $form_id = $request->form_id;
+        $token = $request->token;
+        $ref_id = $request->ref_id;
+
+        $countForm = Form::where('form_id',$form_id)->where('ref_id',$ref_id)->where('status','ACTIVE')->count();
+        if($countForm == 0)
+        {
+            $response['ok'] = false;
+            $response['message'] = true;
+            return response('Not Found..',401);
+        }
+        $countDetail =  AnswerDetail::where('form_id',$form_id)->where('ref_id',$ref_id)->where('token',$token)->count();
+        if($countDetail == 0)
+        {
+            $response['ok'] = true;
+            $response['tokenExist'] = false;
+            return $response;
+        }
+        $answer_detail = AnswerDetail::where('form_id',$form_id)->where('token',$token)->first();
+        if($answer_detail->submitted == false)
+        {
+            $response['ok'] = true;
+            $response['tokenExist'] = true;
+        }else{
+            $response['ok'] = false;
+        }
+        return $response;
     }
 }
