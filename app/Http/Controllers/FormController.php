@@ -16,7 +16,7 @@ class FormController extends Controller
     public function store(Request $request)
     {
         $user = auth()->user();
-        $ref_id =   Str::random(15);
+        $ref_id =   Str::random(7);
        
         $form =  Form::create([
             'title' => $request->title,

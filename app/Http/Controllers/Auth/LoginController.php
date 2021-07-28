@@ -15,7 +15,7 @@ class LoginController extends Controller
    
     public function redirectToProvider($provider)
     {
-       
+        
         return Response::json([
             'url' => Socialite::driver($provider)->stateless()->redirect()->getTargetUrl(),
         ]);
@@ -23,6 +23,7 @@ class LoginController extends Controller
     }
     public function handleCallbackProvider($provider)
     {
+        
         $user =  Socialite::driver($provider)->stateless()->user();
       
         if(isset($user->email))
