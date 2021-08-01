@@ -6,6 +6,7 @@ use App\Models\Question;
 use App\Models\Property;
 use App\Models\Choice;
 use App\Models\Feedback;
+use App\Models\UserFormLink;
 use Illuminate\Http\Request;
 
 class BuildQuestionController extends Controller
@@ -15,11 +16,13 @@ class BuildQuestionController extends Controller
     {
         $user = auth()->user();
         $form_id = $request->form_id;
-        //Checking if form exists user first.. before fetching questions.
-        $formCount = Form::where('user_id',$user->id)->where('form_id',$form_id)->count();
-        if($formCount > 0)
-        {   
-            $form = Form::where('user_id',$user->id)->where('form_id',$form_id)->first();
+       
+        //If form exists exists for user then fetch questions detail for form
+        $form =UserFormLink::where('user_id',$user->id)->where('user_form_links.form_id',$form_id)
+                            ->join('forms','forms.form_id','user_form_links.form_id')
+                            ->first();
+        if($form)
+        {
             $questions = Question::where('form_id',$form_id)->get();
             foreach ($questions as $key => $question) 
             {
@@ -28,9 +31,9 @@ class BuildQuestionController extends Controller
                 {
                     $question->title = "";
                 }
-         
+            
                 $question->form_id = $form_id;
-               
+                
                 $properties = Property::where('q_id',$question->q_id)->first();
 
                 $choices = Choice::where('q_id',$question->q_id)->get();
@@ -38,18 +41,20 @@ class BuildQuestionController extends Controller
                 {
                     $choice->c_index = $key;
                 }
-                 $properties->choices = $choices;
+                    $properties->choices = $choices;
                 $properties->feedback = Feedback::where('q_id',$question->q_id)->get();
                 $question->properties = $properties;
-               
+                
             }
             $form->questions = $questions;
             $response['form'] = $form;
             return response($response);
         }else{
-            
-            return response("You cannot access form..",401);
-        } 
+            $response['message'] = "You cannot access form..";
+            return response($response,401);
+        }
+          
+       
     }
 
     //Creating new question here for form_id
@@ -58,8 +63,11 @@ class BuildQuestionController extends Controller
         $user = auth()->user();
         $form_id = $request->form_id;
         $type = $request->type;
-        $form = Form::where('user_id',$user->id)->where('form_id',$form_id)->first();
-        if($form->count() > 0)
+        //Check if form exists for before building question..
+        $form_count = UserFormLink::where('user_id',$user->id)
+                                ->join('forms','forms.form_id','user_form_links.form_id')->count();
+
+        if($form_count > 0)
         {   
             $question =  Question::create([
              'form_id' => $form_id,
@@ -82,6 +90,8 @@ class BuildQuestionController extends Controller
             $question->title="";
             
             //Updating form column for updated_at here..
+            $form = Form::where('form_id',$form_id)->first();
+
             $form->touch();
             return response($question);
         }else{
@@ -95,9 +105,10 @@ class BuildQuestionController extends Controller
         $user = auth()->user();
         $form_id = $request->form_id;
         $q_id = $request->q_id;
-        //Firstly Check if user owns the form he wants to edit first..
-        $form = Form::where('user_id',$user->id)->where('form_id',$form_id)->get();
-        if($form->count() > 0)
+        //Firstly Check if user is a collaborator in the form he wants to edit first..
+        $form_count = UserFormLink::where('user_id',$user->id)
+                            ->join('forms','forms.form_id','user_form_links.form_id')->count();
+        if($form_count > 0)
         {   
 
             $question = Question::where('q_id',$q_id)->first();
@@ -153,7 +164,7 @@ class BuildQuestionController extends Controller
                 }
                
             }
-            $upForm = Form::where('user_id',$user->id)->where('form_id',$form_id)->first();
+            $upForm = Form::where('form_id',$form_id)->first();
             $upForm->status = "ACTIVE";
             $upForm->save();
             $upForm->touch();
@@ -162,7 +173,8 @@ class BuildQuestionController extends Controller
             return response($response);
             
         }else{
-            return response("You cannot access form..",401);
+            $response['message'] = "You cannot access form..";
+            return response($response,401);
         }
     
     }
@@ -171,13 +183,17 @@ class BuildQuestionController extends Controller
         $user = auth()->user();
         $form_id = $request->form_id;
         $q_id = $request->q_id;
-        //Firstly Check if user owns the form he wants to edit first..
-        $form = Form::where('user_id',$user->id)->where('form_id',$form_id)->get();
-        if($form->count() > 0)
+        //Firstly Check if user is a collaborator in the form he wants to edit first..
+        $form_count =  UserFormLink::where('user_id',$user->id)
+                                    ->where('user_form_links.form_id',$form_id)
+                                    ->join('forms','forms.form_id','user_form_links.form_id')
+                                    ->count();
+        if($form_count > 0)
         {   
-            $question = Question::where('q_id',$q_id)->delete();
+            Question::where('q_id',$q_id)->delete();
             //Updating form column for updated_at here..
-            $upForm = Form::where('user_id',$user->id)->where('form_id',$form_id)->first();
+            
+            $upForm = Form::where('form_id',$form_id)->first();
             $upForm->touch();
             $response['ok'] = true;
             return $response;

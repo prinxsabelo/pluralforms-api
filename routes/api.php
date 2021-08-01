@@ -21,10 +21,12 @@ use App\Http\Controllers\ResponseController;
 
 */
 
-Route::get('/login/{provider}', [LoginController::class,'redirectToProvider']);
-Route::get('/login/{provider}/callback',[LoginController::class,'handleCallbackProvider']);
-Route::get('/logout',[LogoutController::class,'logout']);
-
+Route::group(['middleware' => ['web']], function () {
+  Route::get('/login/{provider}', [LoginController::class,'redirectToProvider']);
+  Route::get('/login/{provider}/callback',[LoginController::class,'handleCallbackProvider']);
+  Route::get('/logout',[LogoutController::class,'logout']);
+  
+});
 Route::group(['middleware' => 'jwt.auth'], function() {
     //Forms..
     Route::post('/user/forms',[FormController::class,'store']);

@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use App\Models\User;
-use App\Models\LinkUserForm;
+use App\Models\UserFormLink;
 use App\Models\Question;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -19,9 +19,14 @@ class Form extends Model
     // {
     //     return $this->belongsTo(User::class);
     // }
-    public function user()
+    // public function user()
+    // {
+    //     return $this->belongsTo(User::class);
+    // }
+
+    public function userForms()
     {
-        return $this->belongsTo(User::class);
+        return $this->hasMany(UserFormLink::class);
     }
     //One form can have multiple questions..
     public function questions()

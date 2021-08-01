@@ -7,6 +7,8 @@ use App\Models\AnswerDetail;
 use App\Models\Form;
 use App\Models\Choice;
 use App\Models\Property;
+use App\Models\User;
+use App\Models\UserFormLink;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -17,12 +19,17 @@ class FormController extends Controller
     {
         $user = auth()->user();
         $ref_id =   Str::random(7);
-       
+        
         $form =  Form::create([
             'title' => $request->title,
-            'ref_id' => $ref_id,
+            'ref_id' => $ref_id
+        ]);
+
+        $user_form = UserFormLink::create([
+            'form_id' => $form->form_id,
             'user_id' => $user->id
         ]);
+
         // $form =  $user->forms()->create($request->only('title'));
         $form->no_questions = 0;
         $form = $form->refresh();
@@ -66,58 +73,80 @@ class FormController extends Controller
     public function close(Request $request)
     {
         $user = auth()->user();
-        $form =  Form::where('form_id',$request->form_id)->where('user_id',$user->id)->first();
-        $form->status = "CLOSED";
-        $form->save();
-        $form = $form->refresh();
-        $form->no_questions =  Question::where('form_id',$request->form_id)->count();
-        return $form;
+        $userFormLinkCount = UserFormLink::where('user_id',$user->id)->where('form_id',$request->form_id)->count();
+        if($userFormLinkCount > 0)
+        {
+            $form =  Form::where('form_id',$request->form_id)->first();
+            $form->status = "CLOSED";
+            $form->save();
+            $form = $form->refresh();
+            $form->no_questions =  Question::where('form_id',$request->form_id)->count();
+            return $form;
+        }else{
+            $response['message'] = "You cannot access form..";
+        }
+  
     }
 
     //Form can be restored here..
     public function restore(Request $request)
     {
         $user = auth()->user();
-        $form =  Form::where('user_id',$user->id)->where('form_id',$request->form_id)->first();
-        $form->status = "ACTIVE";
-        $form->save();
-        $form = $form->refresh();
-        $form->no_views = AnswerDetail::where('form_id',$form->form_id)->where('visited',true)->count();
-        $form->no_questions =  Question::where('form_id',$request->form_id)->count();
-        $form->no_responses = Answer::where('form_id',$form->form_id)->distinct()->count('token');
-        return $form;
+        $userFormLinkCount = UserFormLink::where('user_id',$user->id)->where('form_id',$request->form_id)->count();
+        if($userFormLinkCount > 0)
+        {
+            $form =  Form::where('form_id',$request->form_id)->first();
+            $form->status = "ACTIVE";
+            $form->save();
+            $form = $form->refresh();
+            $form->no_views = AnswerDetail::where('form_id',$form->form_id)->where('visited',true)->count();
+            $form->no_questions =  Question::where('form_id',$request->form_id)->count();
+            $form->no_responses = Answer::where('form_id',$form->form_id)->distinct()->count('token');
+            return $form;
+        }else{
+            $response['message'] = "You cannot access form..";
+        }
     }
 
     // Form can be deleted here..
     public function delete(Request $request)
     {   
         $user = auth()->user();
-        $form =  Form::where('form_id',$request->form_id)->delete();
-        if($form)
+        $userFormLinkCount = UserFormLink::where('user_id',$user->id)->where('form_id',$request->form_id)->count();
+        if($userFormLinkCount > 0)
         {
-            $response['ok'] = true;
-            return $response;
+            $form =  Form::where('form_id',$request->form_id)->delete();
+            if($form)
+            {
+                $response['ok'] = true;
+                return $response;
+            }
+        }else{
+            $response['message'] = "You cannot access form..";
         }
-    
     }
 
     // Fetching all forms for user here..
     public function index()
     {
         $user = auth()->user();
-        $forms = Form::where('user_id',$user->id)->orderBy('created_at','DESC')->get();
-        foreach($forms as $form)
+       
+        //First fetch out form_links for user..
+  
+        $user_forms = UserFormLink::where('user_id',$user->id)
+                                ->join('forms','forms.form_id','user_form_links.form_id')
+                                ->orderBy('user_form_links.created_at','DESC')->get();
+ 
+        foreach($user_forms as $form)
         {
             $form_id = $form->form_id;
-            $ref_id = $form->ref_id;
-            // $form->no_responses = Answer::where('answer_details.form_id',$form_id)->where('answer_details.submitted',true)
-            //                             ->join('answer_details','answer_details.form_id','answers.form_id')    
-            //                             ->distinct()->count('answer_details.token');
+          
             $form->no_views = AnswerDetail::where('form_id',$form_id)->where('visited',true)->count();
             $form->no_responses = AnswerDetail::where('form_id',$form_id)->where('submitted',true)->count();
             $form->no_questions =  Question::where('form_id',$form_id)->count();
         }
-        return response($forms);
+        return response($user_forms);
+       
     }
 
 
@@ -126,51 +155,62 @@ class FormController extends Controller
     {
         $user = auth()->user();
         $ref_id =   Str::random(7);
-        $fromForm = Form::where('form_id',$request->form_id)->first();
-
-        $newForm =  Form::create([
-            'title' => $request->title,
-            'ref_id' => $ref_id,
-            'begin_header' => $fromForm->begin_header,
-            'begin_desc' => $fromForm->begin_desc,
-            'end_header' => $fromForm->end_header,
-            'end_desc' => $fromForm->end_desc,
-            'avatar' => $fromForm->avatar,
-            'status' => $fromForm->status,
-            'user_id' => $user->id
-        ]);
-
-        $fromQuestions = Question::where('form_id',$request->form_id)->get();
-        foreach($fromQuestions as $question)
+        $userFormLinkCount = UserFormLink::where('user_id',$user->id)->where('form_id',$request->form_id)->count();
+        if($userFormLinkCount > 0)
         {
-            
-            $fromProperty = Property::where('q_id',$question->q_id)->first();
-            $fromChoices = Choice::where('q_id',$question->q_id)->get();
+            $fromForm = Form::where('form_id',$request->form_id)->first();
 
-            $newQuestion = Question::create([
-                'form_id' => $newForm->form_id,
-                'title' => $question->title,
-                'type' => $question->type 
+            $newForm =  Form::create([
+                'title' => $request->title,
+                'ref_id' => $ref_id,
+                'begin_header' => $fromForm->begin_header,
+                'begin_desc' => $fromForm->begin_desc,
+                'end_header' => $fromForm->end_header,
+                'end_desc' => $fromForm->end_desc,
+                'avatar' => $fromForm->avatar,
+                'status' => $fromForm->status,
             ]);
 
-            Property::create([
-                'q_id' => $newQuestion->q_id,
-                'shape' => $fromProperty->shape,
-                'allow_multiple_selection' => $fromProperty->allow_multiple_selection,
-                'required' => $fromProperty->required,
-                'randomize' => $fromProperty->randomize
+
+            UserFormLink::create([
+                'user_id' => $user->id,
+                'form_id' => $newForm->form_id
             ]);
-            
-            foreach($fromChoices as $choice)
+
+            $fromQuestions = Question::where('form_id',$request->form_id)->get();
+            foreach($fromQuestions as $question)
             {
-                Choice::create([
-                    'label' => $choice->label,
-                    'q_id' => $newQuestion->q_id
+                
+                $fromProperty = Property::where('q_id',$question->q_id)->first();
+                $fromChoices = Choice::where('q_id',$question->q_id)->get();
+
+                $newQuestion = Question::create([
+                    'form_id' => $newForm->form_id,
+                    'title' => $question->title,
+                    'type' => $question->type 
                 ]);
+
+                Property::create([
+                    'q_id' => $newQuestion->q_id,
+                    'shape' => $fromProperty->shape,
+                    'allow_multiple_selection' => $fromProperty->allow_multiple_selection,
+                    'required' => $fromProperty->required,
+                    'randomize' => $fromProperty->randomize
+                ]);
+                
+                foreach($fromChoices as $choice)
+                {
+                    Choice::create([
+                        'label' => $choice->label,
+                        'q_id' => $newQuestion->q_id
+                    ]);
+                }
             }
+            $newForm->no_responses = Answer::where('form_id',$newForm->form_id)->distinct()->count('token');
+            $newForm->no_questions =  Question::where('form_id',$newForm->form_id)->count();
+            return $newForm;
+        }else{
+            $response['message'] = "You cannot access form..";
         }
-        $newForm->no_responses = Answer::where('form_id',$newForm->form_id)->distinct()->count('token');
-        $newForm->no_questions =  Question::where('form_id',$newForm->form_id)->count();
-        return $newForm;
     }
 }

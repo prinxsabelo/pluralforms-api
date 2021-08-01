@@ -22,7 +22,9 @@ class LoginController extends Controller
      
     }
     public function handleCallbackProvider($provider)
-    {
+    {   
+        //Works for online..
+        // $user = Socialite::driver($provider)->with(['access_type' => 'offline'])->user();
         
         $user =  Socialite::driver($provider)->stateless()->user();
       
@@ -37,7 +39,7 @@ class LoginController extends Controller
         return response()->json([
             'access_token' => $token,
             'token_type' => 'bearer',
-            'expires_in' => auth()->factory()->getTTL() * 60
+            'expires_in' => auth()->factory()->getTTL() 
         ]);
     }
     public function LoginOrSignupAccount($checkUser, $provider)
@@ -68,6 +70,9 @@ class LoginController extends Controller
             'ok' => true
         ]);
       
-        // return $this->respondWithToken($token);
+        return $this->respondWithToken($token);
      }
 }
+
+
+// $user =  Socialite::driver($provider)->stateless()->user();

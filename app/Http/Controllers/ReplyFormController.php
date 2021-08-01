@@ -7,6 +7,8 @@ use App\Models\Answer;
 use App\Models\Choice;
 use App\Models\Feedback;
 use App\Models\AnswerDetail;
+use App\Models\User;
+use App\Models\UserFormLink;
 use Illuminate\Http\Request;
 
 class ReplyFormController extends Controller
@@ -161,6 +163,8 @@ class ReplyFormController extends Controller
     }
     public function check(Request $request)
     {
+        //Confirm who's applying for form..
+
         $form_id = $request->form_id;
         $token = $request->token;
         $ref_id = $request->ref_id;
@@ -183,9 +187,35 @@ class ReplyFormController extends Controller
         if($answer_detail->submitted == false)
         {
             $response['ok'] = true;
+
             $response['tokenExist'] = true;
         }else{
-            $response['ok'] = false;
+            // Confirm if user is the one applying for form here...
+            if(!$request->email)
+            {
+                $response['ok'] = false;
+                return $response;
+            }
+            
+            $findUser = User::where('email', $request->email)->first();
+            if(!$findUser){
+                $response['ok'] = false;
+                return $response;
+            }
+            $response['user'] = $findUser;
+            
+            $checkUserForm = UserFormLink::where('form_id',$form_id)->where('user_id',$findUser->id)->first();
+            if(!$checkUserForm)
+            {
+                $response['ok'] = false;
+                return $response;
+            }
+            
+            Answer::where('token',$token)->delete();
+            AnswerDetail::where('form_id',$form_id)->where('token',$token)->delete();
+            $response['ok'] = true;
+            $response['tokenExist'] = false;
+     
         }
         return $response;
     }

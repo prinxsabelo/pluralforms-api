@@ -65,8 +65,13 @@ class User extends Authenticatable implements JWTSubject
 
 
     //One user can have multiple forms..
-    public function forms()
+    // public function forms()
+    // {
+    //     return $this->hasMany(Form::class);
+    // }
+
+    public function userFormlinks()
     {
-        return $this->hasMany(Form::class);
+        return $this->hasMany(UserFormLink::class);
     }
 }

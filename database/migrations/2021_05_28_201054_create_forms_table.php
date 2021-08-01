@@ -16,14 +16,14 @@ class CreateFormsTable extends Migration
         Schema::create('forms', function (Blueprint $table) {
             $table->bigIncrements('form_id');
             $table->string("ref_id");
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            // $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('title');
             $table->string('avatar')->nullable();
             $table->string('status')->default('ACTIVE');
             $table->string('begin_header')->default('Welcome')->nullable();
             $table->string('begin_desc')->default('Hi there, please fill out and submit this form.')->nullable();
             $table->string('end_header')->default('Thank You!')->nullable();
-            $table->string('end_desc')->default('Your submission has been received!')->nullable();
+            $table->string('end_desc')->default('Your submission has been received..')->nullable();
             $table->timestamps();
         });
     }
