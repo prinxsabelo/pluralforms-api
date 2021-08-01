@@ -235,7 +235,7 @@ class BuildQuestionController extends Controller
         {
             $choice->c_index = $key;
         }
-         $properties->choices = $choices;
+        $properties->choices = $choices;
         $properties->feedback = Feedback::where('q_id',$newQuestion->q_id)->get();
         $newQuestion->properties = $properties;
 
